@@ -1,0 +1,787 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cancer Risk Predictor - AI Diagnostic Tool</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header class="header">
+        <div class="header-left">
+            <div class="header-icon"><i class="fas fa-dna"></i></div>
+            <div>
+                <h1>Cancer Risk Predictor</h1>
+                <span class="subtitle">AI-Powered Breast Cancer Diagnostic Support</span>
+            </div>
+        </div>
+        <span class="header-badge"><i class="fas fa-flask"></i> ML Model v1.0</span>
+    </header>
+
+    <!-- ===== MAIN LAYOUT ===== -->
+    <div class="container">
+
+        <!-- ===== SIDEBAR ===== -->
+        <aside class="sidebar" id="sidebar">
+            <h2><i class="fas fa-user-md"></i> Patient Information</h2>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label><i class="fas fa-user"></i> Patient Name</label>
+                    <input type="text" id="patientName" placeholder="e.g. Jane Doe" value="Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label><i class="fas fa-calendar"></i> Age</label>
+                    <input type="number" id="patientAge" placeholder="e.g. 45" value="45" min="1" max="120">
+                </div>
+            </div>
+            <div class="form-group">
+                <label><i class="fas fa-id-card"></i> Patient ID</label>
+                <input type="text" id="patientId" placeholder="e.g. PAT-001" value="PAT-001">
+            </div>
+
+            <!-- Quick Fill Samples -->
+            <div class="quick-fill">
+                <button onclick="fillSampleData('benign')"> Benign Sample</button>
+                <button onclick="fillSampleData('malignant')"> Malignant Sample</button>
+                <button onclick="fillSampleData('random')">Random Values</button>
+            </div>
+
+            <!-- Features Toggle -->
+            <div class="features-toggle" onclick="toggleFeatures()">
+                <h3><i class="fas fa-sliders-h"></i> Cell Features (8)</h3>
+                <i class="fas fa-chevron-down toggle-icon" id="featuresToggleIcon"></i>
+            </div>
+
+            <div class="features-grid" id="featuresGrid">
+                <div id="featuresContainer"></div>
+            </div>
+
+            <button class="predict-btn" id="predictBtn" onclick="predict()">
+                <div class="spinner"></div>
+                <span class="btn-text"><i class="fas fa-microscope"></i> Analyze & Predict</span>
+            </button>
+        </aside>
+
+        <!-- ===== MAIN CONTENT ===== -->
+        <main class="main-content">
+
+            <!-- Patient Card -->
+            <div class="patient-card" id="patientCard">
+                <div class="card-title"><i class="fas fa-user-circle"></i> Current Patient</div>
+                <div class="patient-details">
+                    <div class="patient-detail-item">
+                        <i class="fas fa-user"></i>
+                        <div>
+                            <div class="label">Name</div>
+                            <div class="value" id="displayName">â€”</div>
+                        </div>
+                    </div>
+                    <div class="patient-detail-item">
+                        <i class="fas fa-calendar"></i>
+                        <div>
+                            <div class="label">Age</div>
+                            <div class="value" id="displayAge">â€”</div>
+                        </div>
+                    </div>
+                    <div class="patient-detail-item">
+                        <i class="fas fa-id-card"></i>
+                        <div>
+                            <div class="label">Patient ID</div>
+                            <div class="value" id="displayId">â€”</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Grid -->
+            <div class="results-grid">
+
+                <!-- Gauge Card -->
+                <div class="gauge-card" id="gaugeCard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-tachometer-alt"></i> Cancer Risk Gauge</h3>
+                    </div>
+                    <div class="gauge-container">
+                        <canvas id="gaugeCanvas"></canvas>
+                        <div class="gauge-value">
+                            <div class="percent" id="gaugePercent">0%</div>
+                            <div class="label">Risk Level</div>
+                        </div>
+                    </div>
+                    <div class="gauge-labels">
+                        <span>Low Risk</span>
+                        <span>High Risk</span>
+                    </div>
+                </div>
+
+                <!-- Prediction Result Card -->
+                <div class="result-card" id="resultCard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-clipboard-check"></i> Prediction Result</h3>
+                    </div>
+                    <div class="result-display">
+                        <div class="result-icon" id="resultIcon"><i class="fas fa-circle"></i></div>
+                        <div class="result-label" id="resultLabel">â€”</div>
+                        <div class="confidence-bar">
+                            <div class="bar-label">
+                                <span>Confidence</span>
+                                <span id="confidenceText">0%</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill" id="confidenceFill" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div class="result-meta">
+                            <div class="meta-item">
+                                <div class="meta-value" id="probBenign">0%</div>
+                                <div class="meta-label">P(Benign)</div>
+                            </div>
+                            <div class="meta-item">
+                                <div class="meta-value" id="probMalignant">0%</div>
+                                <div class="meta-label">P(Malignant)</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="charts-row">
+                <div class="chart-card" id="barChartCard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-bar"></i> Probability Comparison</h3>
+                    </div>
+                    <canvas id="barChart"></canvas>
+                </div>
+                <div class="chart-card" id="pieChartCard">
+                    <div class="card-header">
+                        <h3><i class="fas fa-chart-pie"></i> Risk Distribution</h3>
+                    </div>
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="disclaimer">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>
+                    <strong>Educational Disclaimer:</strong> This tool is not a substitute for professional medical advice. 
+                    This prediction is for <strong>educational and research purposes only</strong>. 
+                    Always consult with a qualified healthcare provider for proper diagnosis and treatment.
+                </p>
+            </div>
+
+            <!-- History Section -->
+            <div class="history-section">
+                <div class="section-header">
+                    <h3><i class="fas fa-history"></i> Prediction History</h3>
+                    <button class="refresh-btn" onclick="loadHistory()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="download-btn" onclick="downloadPDF()"><i class="fas fa-download"></i> Download PDF</button>
+                </div>
+                <div class="history-table-wrapper">
+                    <table class="history-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Age</th>
+                                <th>Patient ID</th>
+                                <th>Result</th>
+                                <th>Confidence</th>
+                                <th>P(Benign)</th>
+                                <th>P(Malignant)</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyBody">
+                            <tr>
+                                <td colspan="9">
+                                    <div class="history-empty">
+                                        <i class="fas fa-database"></i>
+                                        <p>No prediction history yet. Run a prediction to see results here.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+    <!-- ===== STATUS BAR ===== -->
+    <div class="status-bar">
+        <div>
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Checking server...</span>
+        </div>
+        <span>Powered by Priyanshu Sengupta</span>
+    </div>
+
+    <script>
+        // ===== GLOBALS =====
+        let barChartInstance = null;
+        let pieChartInstance = null;
+        let gaugeChartInstance = null;
+        const API_BASE = 'http://127.0.0.1:5000';
+
+        // ===== FEATURE DEFINITIONS (Top 8 most important) =====
+        // From original 30 Wisconsin Breast Cancer features, selected by |coef| importance
+        const FEATURE_NAMES = [
+            'worst_texture', 'se_radius', 'worst_symmetry', 'mean_concave_points',
+            'worst_concavity', 'se_area', 'worst_radius', 'worst_concave_points'
+        ];
+
+        // Default benign sample (only the 8 selected features) - fallback if server unavailable
+        // Original indices: [21, 10, 28, 7, 26, 13, 20, 27]
+        const BENIGN_SAMPLE = [
+            23.66,   // worst_texture
+            0.4202,  // se_radius
+            0.2499,  // worst_symmetry
+            0.01189, // mean_concave_points
+            0.03876, // worst_concavity
+            22.91,   // se_area
+            13.55,   // worst_radius
+            0.01593  // worst_concave_points
+        ];
+
+        const MALIGNANT_SAMPLE = [
+            33.41,   // worst_texture
+            1.137,   // se_radius
+            0.2549,  // worst_symmetry
+            0.07649, // mean_concave_points
+            0.3576,  // worst_concavity
+            106.3,   // se_area
+            24.57,   // worst_radius
+            0.1059   // worst_concave_points
+        ];
+
+        // Feature ranges for sliders [min, max, step] - fallback only.
+        // Real ranges are fetched from the backend, computed from Cancer_Data.csv.
+        let FEATURE_RANGES = [
+            [12.0, 50.0, 0.1],    // worst_texture
+            [0.1, 2.9, 0.01],     // se_radius
+            [0.18, 0.42, 0.001],  // worst_symmetry
+            [0.0, 0.20, 0.001],   // mean_concave_points
+            [0.0, 0.70, 0.001],   // worst_concavity
+            [6.0, 550.0, 0.5],    // se_area
+            [7.0, 37.0, 0.1],     // worst_radius
+            [0.0, 0.30, 0.001]    // worst_concave_points
+        ];
+
+        // Fetch data-driven feature ranges (min/max/step) from the backend,
+        // which computes them directly from Cancer_Data.csv.
+        async function loadFeatureRanges() {
+            try {
+                const res = await fetch(`${API_BASE}/features`);
+                if (!res.ok) throw new Error('Failed to fetch features');
+                const info = await res.json();
+                if (info.feature_stats && info.feature_names) {
+                    FEATURE_RANGES = info.feature_names.map(name => {
+                        const s = info.feature_stats[name];
+                        return [s.min, s.max, s.step];
+                    });
+                    console.log('[INFO] Feature ranges loaded from Cancer_Data.csv via backend');
+                }
+            } catch (err) {
+                console.warn('[WARN] Could not load feature ranges from server, using fallback:', err);
+            }
+        }
+
+        // ===== INIT =====
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadFeatureRanges();
+            buildFeatureSliders();
+            checkServerStatus();
+            loadHistory();
+        });
+
+        // ===== BUILD FEATURE SLIDERS =====
+        function buildFeatureSliders() {
+            const container = document.getElementById('featuresContainer');
+            container.innerHTML = '';
+            
+            FEATURE_NAMES.forEach((name, i) => {
+                const [min, max, step] = FEATURE_RANGES[i];
+                const defaultValue = BENIGN_SAMPLE[i];
+                
+                const div = document.createElement('div');
+                div.className = 'feature-item';
+                div.innerHTML = `
+                    <div class="feature-header">
+                        <span>${formatFeatureName(name)}</span>
+                        <span class="value-display" id="featureVal_${i}">${defaultValue.toFixed(4)}</span>
+                    </div>
+                    <input type="range" id="feature_${i}" 
+                           min="${min}" max="${max}" step="${step}" 
+                           value="${defaultValue}"
+                           oninput="updateFeatureValue(${i})">
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function formatFeatureName(name) {
+            return name
+                .replace(/_/g, ' ')
+                .replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function updateFeatureValue(index) {
+            const slider = document.getElementById(`feature_${index}`);
+            const display = document.getElementById(`featureVal_${index}`);
+            const val = parseFloat(slider.value);
+            display.textContent = val.toFixed(4);
+        }
+
+        function getFeatureValues() {
+            return FEATURE_NAMES.map((_, i) => {
+                return parseFloat(document.getElementById(`feature_${i}`).value);
+            });
+        }
+
+        function setFeatureValues(values) {
+            values.forEach((val, i) => {
+                const slider = document.getElementById(`feature_${i}`);
+                if (slider) {
+                    slider.value = val;
+                    updateFeatureValue(i);
+                }
+            });
+        }
+
+        // ===== TOGGLE FEATURES =====
+        function toggleFeatures() {
+            const grid = document.getElementById('featuresGrid');
+            const icon = document.getElementById('featuresToggleIcon');
+            grid.classList.toggle('open');
+            icon.classList.toggle('open');
+        }
+
+        // ===== QUICK FILL =====
+        async function fillSampleData(type) {
+            if (type === 'benign') {
+                setFeatureValues(BENIGN_SAMPLE);
+            } else if (type === 'malignant') {
+                setFeatureValues(MALIGNANT_SAMPLE);
+            } else if (type === 'random') {
+                // Draw a REAL patient from Cancer_Data.csv via the backend.
+                // Uniform random values across the full range would land almost
+                // exclusively in the malignant zone (malignant tumors have far
+                // wider/higher feature values), which is misleading.
+                try {
+                    const res = await fetch(`${API_BASE}/random_sample`);
+                    if (!res.ok) throw new Error('Failed to fetch sample');
+                    const sample = await res.json();
+                    setFeatureValues(sample.features);
+                    showToast(`Loaded real sample from dataset (actual: ${sample.true_diagnosis})`, 'info');
+                } catch (err) {
+                    console.warn('[WARN] Server sample unavailable, using benign sample:', err);
+                    setFeatureValues(BENIGN_SAMPLE);
+                }
+            }
+        }
+
+        // ===== PREDICT =====
+        async function predict() {
+            const name = document.getElementById('patientName').value.trim();
+            const age = parseInt(document.getElementById('patientAge').value);
+            const id = document.getElementById('patientId').value.trim();
+
+            if (!name || !age || !id) {
+                showToast('Please fill all patient details', 'error');
+                return;
+            }
+
+            const features = getFeatureValues();
+            const btn = document.getElementById('predictBtn');
+            btn.classList.add('loading');
+            btn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: name,
+                        age: age,
+                        id: id,
+                        features: features
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Prediction failed');
+                }
+
+                const data = await response.json();
+                displayResults(data);
+                loadHistory();
+                showToast('Prediction completed successfully!', 'success');
+
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showToast('Error: ' + error.message, 'error');
+            } finally {
+                btn.classList.remove('loading');
+                btn.disabled = false;
+            }
+        }
+
+        // ===== DISPLAY RESULTS =====
+        function displayResults(data) {
+            const { patient, prediction } = data;
+            const isMalignant = prediction.class === 1;
+            const confidence = prediction.confidence * 100;
+            const probBenign = prediction.probability_benign * 100;
+            const probMalignant = prediction.probability_malignant * 100;
+
+            // Show cards
+            document.getElementById('patientCard').classList.add('visible');
+            document.getElementById('gaugeCard').classList.add('visible');
+            document.getElementById('resultCard').classList.add('visible');
+            document.getElementById('barChartCard').classList.add('visible');
+            document.getElementById('pieChartCard').classList.add('visible');
+
+            // Patient details
+            document.getElementById('displayName').textContent = patient.name;
+            document.getElementById('displayAge').textContent = patient.age;
+            document.getElementById('displayId').textContent = patient.id;
+
+            // Prediction result
+            const resultLabel = document.getElementById('resultLabel');
+            const resultIcon = document.getElementById('resultIcon');
+            resultLabel.textContent = prediction.result;
+            resultLabel.className = 'result-label ' + (isMalignant ? 'malignant' : 'benign');
+            resultIcon.className = 'result-icon ' + (isMalignant ? 'malignant' : 'benign');
+            resultIcon.innerHTML = isMalignant 
+                ? '<i class="fas fa-times-circle"></i>' 
+                : '<i class="fas fa-check-circle"></i>';
+
+            // Confidence bar
+            document.getElementById('confidenceText').textContent = confidence.toFixed(1) + '%';
+            const fill = document.getElementById('confidenceFill');
+            fill.style.width = confidence + '%';
+            fill.className = 'bar-fill ' + (confidence >= 70 ? 'high' : confidence >= 40 ? 'medium' : 'low');
+
+            // Probabilities
+            document.getElementById('probBenign').textContent = probBenign.toFixed(1) + '%';
+            document.getElementById('probMalignant').textContent = probMalignant.toFixed(1) + '%';
+
+            // Gauge
+            updateGauge(probMalignant);
+
+            // Charts
+            updateBarChart(probBenign, probMalignant);
+            updatePieChart(probBenign, probMalignant);
+        }
+
+        // ===== GAUGE =====
+        function updateGauge(percentage) {
+            document.getElementById('gaugePercent').textContent = Math.round(percentage) + '%';
+
+            const canvas = document.getElementById('gaugeCanvas');
+            const ctx = canvas.getContext('2d');
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+            const centerX = width / 2;
+            const centerY = height * 0.85;
+            const radius = Math.min(width, height * 1.3) / 2;
+            const lineWidth = 18;
+
+            ctx.clearRect(0, 0, width, height);
+
+            // Background arc
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - lineWidth / 2, Math.PI * 0.75, Math.PI * 2.25);
+            ctx.strokeStyle = '#232342';
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Value arc
+            const startAngle = Math.PI * 0.75;
+            const endAngle = startAngle + (Math.PI * 1.5) * (percentage / 100);
+            
+            const gradient = ctx.createLinearGradient(0, 0, width, 0);
+            gradient.addColorStop(0, '#4ade80');
+            gradient.addColorStop(0.5, '#fbbf24');
+            gradient.addColorStop(1, '#e94560');
+            
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - lineWidth / 2, startAngle, endAngle);
+            ctx.strokeStyle = gradient;
+            ctx.lineWidth = lineWidth;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+        }
+
+        // ===== BAR CHART =====
+        function updateBarChart(benign, malignant) {
+            const ctx = document.getElementById('barChart').getContext('2d');
+            
+            if (barChartInstance) {
+                barChartInstance.destroy();
+            }
+
+            barChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Benign', 'Malignant'],
+                    datasets: [{
+                        label: 'Probability',
+                        data: [benign, malignant],
+                        backgroundColor: [
+                            'rgba(74, 222, 128, 0.7)',
+                            'rgba(233, 69, 96, 0.7)'
+                        ],
+                        borderColor: [
+                            '#4ade80',
+                            '#e94560'
+                        ],
+                        borderWidth: 2,
+                        borderRadius: 6,
+                        barThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.04)' },
+                            ticks: { 
+                                color: '#888',
+                                callback: v => v + '%'
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== PIE CHART =====
+        function updatePieChart(benign, malignant) {
+            const ctx = document.getElementById('pieChart').getContext('2d');
+            
+            if (pieChartInstance) {
+                pieChartInstance.destroy();
+            }
+
+            pieChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Benign (Low Risk)', 'Malignant (High Risk)'],
+                    datasets: [{
+                        data: [benign, malignant],
+                        backgroundColor: [
+                            'rgba(74, 222, 128, 0.8)',
+                            'rgba(233, 69, 96, 0.8)'
+                        ],
+                        borderColor: [
+                            '#4ade80',
+                            '#e94560'
+                        ],
+                        borderWidth: 2,
+                        hoverOffset: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    cutout: '55%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#aaa',
+                                padding: 16,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ===== HISTORY =====
+        async function loadHistory() {
+            const tbody = document.getElementById('historyBody');
+            
+            try {
+                const response = await fetch(`${API_BASE}/history`);
+                if (!response.ok) throw new Error('Failed to fetch history');
+                
+                const data = await response.json();
+                const records = data.history;
+
+                if (!records || records.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="9">
+                                <div class="history-empty">
+                                    <i class="fas fa-database"></i>
+                                    <p>No prediction history yet. Run a prediction to see results here.</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+
+                tbody.innerHTML = records.map((r, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td>${r.patient_name}</td>
+                        <td>${r.patient_age}</td>
+                        <td>${r.patient_id}</td>
+                        <td>
+                            <span class="badge ${r.prediction_result === 'Malignant' ? 'badge-malignant' : 'badge-benign'}">
+                                ${r.prediction_result}
+                            </span>
+                        </td>
+                        <td>${(r.confidence * 100).toFixed(1)}%</td>
+                        <td>${(r.probability_benign * 100).toFixed(1)}%</td>
+                        <td>${(r.probability_malignant * 100).toFixed(1)}%</td>
+                        <td>${new Date(r.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.warn('Could not load history:', error.message);
+                // Don't show error for history - it's not critical
+            }                
+        }
+
+                // ===== DOWNLOAD PDF =====
+        async function downloadPDF() {
+            try {
+                const response = await fetch(`${API_BASE}/download_pdf`);
+                if (!response.ok) throw new Error('Failed to download PDF');
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const disposition = response.headers.get('Content-Disposition');
+                let filename = 'cancer_prediction_report.pdf';
+                if (disposition && disposition.indexOf('filename=') !== -1) {
+                    filename = disposition.split('filename=')[1].replace(/"/g, '');
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+
+                showToast('success', 'PDF report downloaded successfully');
+            } catch (error) {
+                console.error('Download PDF error:', error);
+                showToast('error', 'Failed to download PDF report');
+            }
+        }
+
+        async function checkServerStatus() {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    dot.className = 'status-dot online';
+                    text.textContent = ' Server Online | API Ready';
+                } else {
+                    throw new Error('Server not ready');
+                }
+            } catch (error) {
+                dot.className = 'status-dot offline';
+                text.textContent = 'âœ— Server Offline - Start the backend with: python app.py';
+            }
+        }
+
+        function showToast(message, type = 'info') {
+            
+            const existing = document.querySelector('.toast-notification');
+            if (existing) existing.remove();
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-notification';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 70px;
+                right: 30px;
+                padding: 14px 22px;
+                border-radius: 10px;
+                color: #fff;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+                background: ${type === 'success' ? '#1a4a2e' : type === 'error' ? '#4a1a2e' : '#1a2a4a'};
+                border: 1px solid ${type === 'success' ? 'rgba(74,222,128,0.3)' : type === 'error' ? 'rgba(233,69,96,0.3)' : 'rgba(100,150,255,0.3)'};
+            `;
+            toast.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}" 
+                   style="margin-right: 8px; color: ${type === 'success' ? '#4ade80' : type === 'error' ? '#e94560' : '#6496ff'}"></i>
+                ${message}
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transition = 'opacity 0.3s';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+
+            // Add animation keyframes if not exist
+            if (!document.getElementById('toastStyles')) {
+                const style = document.createElement('style');
+                style.id = 'toastStyles';
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(100px); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // ===== CONFIGURE REDRAW ON RESIZE =====
+        window.addEventListener('resize', () => {
+            // Gauges redraw on next prediction
+        });
+    </script>
+
+</body>
+</html>
+
