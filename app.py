@@ -21,8 +21,6 @@ warnings.filterwarnings('ignore', category=UserWarning, module='sklearn')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CSV_PATH = os.path.join(BASE_DIR, 'Cancer_Data.csv')
 MODEL_PATH = os.path.join(BASE_DIR, 'cancer_ensemble_model.pkl')
-
-# 8 feature names (must match index.html FEATURE_NAMES order)
 FEATURE_NAMES = [
     'worst_texture',
     'se_radius',
@@ -34,7 +32,7 @@ FEATURE_NAMES = [
     'worst_concave_points',
 ]
 
-# Mapping from frontend feature names -> CSV column names
+
 FEATURE_TO_CSV = {
     'worst_texture': 'texture_worst',
     'se_radius': 'radius_se',
@@ -49,7 +47,6 @@ FEATURE_TO_CSV = {
 CLASS_NAMES = ['Benign', 'Malignant']
 CLASS_MAP = {'M': 1, 'B': 0}
 
-# In-memory prediction history (no database dependency)
 history_lock = Lock()
 PREDICTION_HISTORY = []
 
@@ -290,7 +287,6 @@ def download_pdf():
             styles['Normal']
         ))
     else:
-        # Summary section
         total = len(history_copy)
         benign = sum(1 for r in history_copy if r['prediction_result'] == 'Benign')
         malignant = sum(1 for r in history_copy if r['prediction_result'] == 'Malignant')
